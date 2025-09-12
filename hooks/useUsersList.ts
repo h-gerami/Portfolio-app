@@ -28,35 +28,38 @@ export const useUsersList = (options: Options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [bLoading, setBloading] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // const useBounce = (delay: number) => {
-  const [bounceText, setBounceText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] = useState("");
   useEffect(() => {
-    setBloading(true);
+    setIsSearching(true);
     const timer = setTimeout(() => {
-      setBounceText(searchText);
-      setBloading(false);
+      setDebouncedSearchText(searchText);
+      setIsSearching(false);
     }, 1000);
 
     return () => clearTimeout(timer);
   }, [searchText]);
 
-  // return bounceText;
-  // };
-
   const fetchUsers = useCallback(
-    async (ac?: AbortController) => {
+    async (ac?: AbortController, isRetry = false) => {
       try {
         setLoading(true);
-        setError("");
+        if (!isRetry) setError("");
         const res = await fetch(url, { signal: ac?.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
         const data = await res.json();
         // dummyjson returns { users: [...] }
         setUsers((data.users ?? data) as User[]);
+        setRetryCount(0); // Reset retry count on success
       } catch (e: any) {
-        if (e?.name !== "AbortError") setError("Failed to load users.");
+        if (e?.name !== "AbortError") {
+          const errorMessage = e.message || "Failed to load users. Please check your connection.";
+          setError(errorMessage);
+        }
       } finally {
         setLoading(false);
       }
@@ -71,8 +74,7 @@ export const useUsersList = (options: Options = {}) => {
   }, [fetchUsers]);
 
   const data = useMemo(() => {
-    // const d = useBounce(1000);
-    const t = bounceText.trim().toLowerCase();
+    const t = debouncedSearchText.trim().toLowerCase();
     if (!t) return users;
 
     // ensure uniqueness (defensive if API ever repeats)
@@ -81,19 +83,26 @@ export const useUsersList = (options: Options = {}) => {
     const last = unique.filter(
       (u) => u.lastName.toLowerCase().includes(t) && !first.some((f) => f.id === u.id),
     );
-    setBloading(false);
     return [...first, ...last];
-  }, [users, bounceText]);
+  }, [users, debouncedSearchText]);
 
   const onRefresh = useCallback(() => {
     setUsers([]);
+    setRetryCount(0);
     fetchUsers();
   }, [fetchUsers]);
+
+  const onRetry = useCallback(() => {
+    if (retryCount < 3) {
+      setRetryCount(prev => prev + 1);
+      fetchUsers(undefined, true);
+    }
+  }, [fetchUsers, retryCount]);
 
   const keyExtractor = useCallback((item: User) => String(item.id), []);
 
   const getItemLayout = useCallback(
-    (_: User[] | null | undefined, index: number) => ({
+    (_: ArrayLike<User> | null | undefined, index: number) => ({
       length: itemHeight + separatorHeight,
       offset: (itemHeight + separatorHeight) * index,
       index,
@@ -116,7 +125,12 @@ export const useUsersList = (options: Options = {}) => {
     keyExtractor,
     getItemLayout,
     onRefresh,
-    bLoading,
+    onRetry,
+    isSearching,
+
+    // retry state
+    retryCount,
+    canRetry: retryCount < 3,
 
     // expose sizes for consumer if needed
     itemHeight,
