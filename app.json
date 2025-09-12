@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "Hossein",
+    "slug": "hossein-portfolio",
+    "owner": "hossein100",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/HG-splash.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "privacy": "public",
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "translucent": true
+    },
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hossein100.hosseinportfolio"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.hossein100.hosseinportfolio"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/HG-splash.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "hossein-cf"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "runtimeVersion": "1.0.0",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fde382d6-235f-46c7-8a01-9635609465e5"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/fde382d6-235f-46c7-8a01-9635609465e5"
+    }
+  }
+}

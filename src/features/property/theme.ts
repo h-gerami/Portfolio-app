@@ -1,0 +1,18 @@
+export const colors = {
+  bg: "#0b1220",
+  card: "#0f172a",
+  border: "rgba(255,255,255,0.08)",
+  text: "#ffffff",
+  textMuted: "#94a3b8",
+  textSubtle: "#cbd5e1",
+  accent: "#93c5fd",
+  primary: "#2563eb",
+  chipBg: "rgba(255,255,255,0.06)",
+  chipBorder: "rgba(255,255,255,0.12)",
+  inputBg: "rgba(255,255,255,0.06)",
+  inputBorder: "rgba(255,255,255,0.14)",
+  dark: "#111827",
+  darkBorder: "#1f2937",
+  gold: "#fbbf24",
+  spark: "#60a5fa",
+};
