@@ -26,6 +26,7 @@ const MAPPING = {
   "creditcard.fill": "credit-card", // 💳 another example
   "building.2.fill": "apartment", // 🏢 SF Symbol → MaterialIcon
   "building.2": "business",
+  "person.3.fill": "group", // 👥 SF Symbol -> MaterialIcon
 } as IconMapping;
 
 /**
