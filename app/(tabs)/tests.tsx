@@ -47,7 +47,7 @@ export default function TestScreen() {
     <SafeAreaView style={styles.container}>
       <View
         style={{
-          flexDirection: "row",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "space-between",
           padding: 10,
