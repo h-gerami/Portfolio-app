@@ -50,4 +50,18 @@ describe('useUsersList', () => {
     expect(key).toBe('123');
     expect(typeof key).toBe('string');
   });
+
+  test('getItemLayout returns correct layout object', () => {
+    const { result } = renderHook(() => useUsersList());
+    
+    const layout = result.current.getItemLayout(null, 0);
+    
+    expect(layout).toHaveProperty('length');
+    expect(layout).toHaveProperty('offset');
+    expect(layout).toHaveProperty('index');
+    expect(typeof layout.length).toBe('number');
+    expect(typeof layout.offset).toBe('number');
+    expect(typeof layout.index).toBe('number');
+    expect(layout.index).toBe(0);
+  });
 });
