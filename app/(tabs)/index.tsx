@@ -302,10 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 38,
     borderWidth: 2,
     borderColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
     elevation: 3,
   },
   nameRow: {

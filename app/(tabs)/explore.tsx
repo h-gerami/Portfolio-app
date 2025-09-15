@@ -105,7 +105,7 @@ function useConfetti() {
   const Render = useCallback(() => {
     if (!show) return null;
     return (
-      <View pointerEvents="none" style={styles.confettiWrap}>
+      <View style={[styles.confettiWrap, { pointerEvents: "none" }]}>
         {anims.map((v, i) => {
           const tx = v.interpolate({
             inputRange: [0, 1],
@@ -743,10 +743,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardActive: {
-    shadowColor: "#60a5fa",
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
+    boxShadow: "0 0px 10px rgba(96, 165, 250, 0.35)",
     elevation: 6,
   },
   cardTarget: {
