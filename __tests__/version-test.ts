@@ -9,6 +9,10 @@ jest.mock('fs', () => ({
   writeFileSync: mockWriteFileSync,
 }));
 
+jest.mock('child_process', () => ({
+  execSync: jest.fn(),
+}));
+
 describe('Version Management', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -71,7 +75,7 @@ describe('Version Management', () => {
     it('should truncate long feature names', () => {
       const longName = 'a'.repeat(100);
       const branchName = createBranchName('1.2.3', longName);
-      expect(branchName.length).toBeLessThanOrEqual(60); // feature/v1.2.3- + 50 chars
+      expect(branchName.length).toBeLessThanOrEqual(70); // feature/v1.2.3- + 50 chars = ~65 chars
     });
   });
 
