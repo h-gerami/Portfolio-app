@@ -10,14 +10,13 @@ import {
   FlatList,
   Dimensions,
   ScrollView,
-} from "react-native";
+ Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useIsFocused } from "@react-navigation/native";
-import { Image } from "react-native";
 import { useDarkTabBar } from "@/hooks/useDarkTabBar";
 
 const { width: SCREEN_W } = Dimensions.get("window");

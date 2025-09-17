@@ -18,7 +18,7 @@ import {
   Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { ThemedText } from "@/components/ThemedText";
+// import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import imageReact from "../../assets/images/react-logo.png";
 
@@ -357,7 +357,7 @@ export default function SkillHuntScreen() {
     ({
       viewableItems,
     }: {
-      viewableItems: Array<{ index?: number | null }>;
+      viewableItems: { index?: number | null }[];
     }) => {
       if (!running || activeIdx == null) return;
       if (viewableItems.length === 0) return;

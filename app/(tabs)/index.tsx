@@ -2,7 +2,6 @@ import { Image } from "expo-image";
 import React, { useRef } from "react";
 import {
   Linking,
-  Platform,
   StyleSheet,
   FlatList,
   TouchableOpacity,
