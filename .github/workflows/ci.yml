@@ -104,15 +104,17 @@ jobs:
     
     - name: Commit version bump
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "ai-agent@github.com"
+        git config --local user.name "🤖 AI Release Agent"
         git add package.json
         git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
         git push
     
     - name: Create and push tag
       run: |
-        git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}: ${{ github.event.head_commit.message }}"
+        git config --local user.email "ai-agent@github.com"
+        git config --local user.name "🤖 AI Release Agent"
+        git tag -a "v${{ steps.version.outputs.new_version }}" -m "🚀 Release v${{ steps.version.outputs.new_version }}: ${{ github.event.head_commit.message }}"
         git push origin "v${{ steps.version.outputs.new_version }}"
     
     - name: Create GitHub Release
