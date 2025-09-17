@@ -10,7 +10,11 @@ test("Are the atts defined correctly", () => {
   expect(typeof result.current.setInput).toBe("function");
   rerender("gfsdg");
   expect(result.current.input).toBe("gfsdg");
-  expect(result.current.setInput).toHaveBeenCalledTimes(2);
+  // Test that setInput can be called
+  act(() => {
+    result.current.setInput("test");
+  });
+  expect(result.current.input).toBe("test");
 });
 
 // test("increments retryCount until max", () => {

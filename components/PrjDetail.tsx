@@ -1,9 +1,6 @@
-import React, { PropsWithChildren } from "react";
+import React from "react";
 import {
   FlatList,
-  ImageStyle,
-  StyleProp,
-  ViewStyle,
   StyleSheet,
 } from "react-native";
 import { ThemedText } from "./ThemedText";

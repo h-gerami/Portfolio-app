@@ -10,12 +10,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Fetch all history for proper versioning
+        fetch-depth: 0
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -34,12 +35,11 @@ jobs:
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
-      if: github.event_name == 'pull_request'
 
   auto-merge:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
     - name: Checkout code
@@ -47,22 +47,15 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Auto-merge PR
-      uses: fastify/github-action-merge-dependabot@v3
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        target: main
-        merge-method: squash
-        merge-commit-message: |
-          Release v${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}
-          
-          Auto-merged from PR #${{ github.event.pull_request.number }}
-          Tests passed successfully ✅
+    - name: Enable auto-merge
+      run: |
+        gh pr merge ${{ github.event.pull_request.number }} --squash --auto --delete-branch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   version-and-tag:
-    needs: [test, auto-merge]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
     - name: Checkout code
@@ -80,17 +73,25 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Extract version from PR number
+    - name: Extract version from commit message
       id: version
       run: |
-        PR_NUMBER=${{ github.event.pull_request.number }}
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
         MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
         PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
         
-        # Increment patch version based on PR number
-        NEW_PATCH=$((PATCH + PR_NUMBER))
+        # Extract PR number from commit message or increment patch
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        if [[ $COMMIT_MSG =~ Release\ v[0-9]+\.[0-9]+\.[0-9]+:.*PR\ #([0-9]+) ]]; then
+          PR_NUMBER=${BASH_REMATCH[1]}
+          NEW_PATCH=$((PATCH + PR_NUMBER))
+        else
+          # Fallback: increment patch by 1
+          NEW_PATCH=$((PATCH + 1))
+          PR_NUMBER="1"
+        fi
+        
         NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
         
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -111,7 +112,7 @@ jobs:
     
     - name: Create and push tag
       run: |
-        git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}: ${{ github.event.pull_request.title }}"
+        git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}: ${{ github.event.head_commit.message }}"
         git push origin "v${{ steps.version.outputs.new_version }}"
     
     - name: Create GitHub Release
@@ -124,12 +125,12 @@ jobs:
         body: |
           ## 🚀 Release v${{ steps.version.outputs.new_version }}
           
-          **PR #${{ steps.version.outputs.pr_number }}**: ${{ github.event.pull_request.title }}
+          **Commit**: ${{ github.event.head_commit.message }}
           
           ### Changes
-          ${{ github.event.pull_request.body }}
+          Automated release after successful test execution and merge to main.
           
           ### Automated Release
-          This release was automatically created after successful test execution and PR merge.
+          This release was automatically created after successful test execution and merge to main branch.
         draft: false
         prerelease: false
