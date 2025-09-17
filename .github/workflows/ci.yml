@@ -34,35 +34,6 @@ jobs:
       uses: codecov/codecov-action@v3
       if: github.event_name == 'pull_request'
 
-  # EAS UPDATE - runs on feature branches after tests pass
-  eas-update:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/bugfix/') || startsWith(github.ref, 'refs/heads/hotfix/'))
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Setup EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
-    
-    - name: EAS Update
-      run: eas update --branch main --message "Update from ${{ github.ref_name }} - ${{ github.event.head_commit.message }}"
-      env:
-        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
   # Version tagging - runs after manual merge to main
   version-tag:
