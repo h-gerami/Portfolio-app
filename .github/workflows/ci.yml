@@ -10,13 +10,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -35,11 +32,12 @@ jobs:
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
+      if: github.event_name == 'pull_request'
 
   auto-merge:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
     
     steps:
     - name: Checkout code
@@ -52,87 +50,3 @@ jobs:
         gh pr merge ${{ github.event.pull_request.number }} --squash --auto --delete-branch
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  version-and-tag:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Extract version from commit message
-      id: version
-      run: |
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
-        MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
-        PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
-        
-        # Extract PR number from commit message or increment patch
-        COMMIT_MSG="${{ github.event.head_commit.message }}"
-        if [[ $COMMIT_MSG =~ Release\ v[0-9]+\.[0-9]+\.[0-9]+:.*PR\ #([0-9]+) ]]; then
-          PR_NUMBER=${BASH_REMATCH[1]}
-          NEW_PATCH=$((PATCH + PR_NUMBER))
-        else
-          # Fallback: increment patch by 1
-          NEW_PATCH=$((PATCH + 1))
-          PR_NUMBER="1"
-        fi
-        
-        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-        
-        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        echo "New version: $NEW_VERSION"
-    
-    - name: Update package.json version
-      run: |
-        npm version ${{ steps.version.outputs.new_version }} --no-git-tag-version
-    
-    - name: Commit version bump
-      run: |
-        git config --local user.email "ai-agent@github.com"
-        git config --local user.name "🤖 AI Release Agent"
-        git add package.json
-        git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
-        git push
-    
-    - name: Create and push tag
-      run: |
-        git config --local user.email "ai-agent@github.com"
-        git config --local user.name "🤖 AI Release Agent"
-        git tag -a "v${{ steps.version.outputs.new_version }}" -m "🚀 Release v${{ steps.version.outputs.new_version }}: ${{ github.event.head_commit.message }}"
-        git push origin "v${{ steps.version.outputs.new_version }}"
-    
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.version.outputs.new_version }}
-        release_name: Release v${{ steps.version.outputs.new_version }}
-        body: |
-          ## 🚀 Release v${{ steps.version.outputs.new_version }}
-          
-          **Commit**: ${{ github.event.head_commit.message }}
-          
-          ### Changes
-          Automated release after successful test execution and merge to main.
-          
-          ### Automated Release
-          This release was automatically created after successful test execution and merge to main branch.
-        draft: false
-        prerelease: false
