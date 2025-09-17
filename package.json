@@ -9,7 +9,13 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "test:ci": "jest --watchAll=false --coverage",
+    "version:patch": "node ./scripts/version.js patch",
+    "version:minor": "node ./scripts/version.js minor",
+    "version:major": "node ./scripts/version.js major",
+    "version:pr": "node ./scripts/version.js",
+    "release": "npm run test:ci && npm run lint && npm run version:patch"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

@@ -1,0 +1,46 @@
+# Branch Protection Rules Configuration
+# This file documents the recommended branch protection settings for GitHub
+
+# Main Branch Protection Rules:
+# 1. Go to GitHub Repository Settings > Branches
+# 2. Add rule for "main" branch
+# 3. Configure the following settings:
+
+branch_protection_rules:
+  main:
+    required_status_checks:
+      strict: true
+      contexts:
+        - "test"
+        - "lint"
+    enforce_admins: true
+    required_pull_request_reviews:
+      required_approving_review_count: 0  # Auto-merge enabled
+      dismiss_stale_reviews: true
+      require_code_owner_reviews: false
+    restrictions:
+      users: []
+      teams: []
+    allow_force_pushes: false
+    allow_deletions: false
+
+# Auto-merge Settings:
+# 1. Go to GitHub Repository Settings > General
+# 2. Enable "Allow auto-merge"
+# 3. Enable "Automatically delete head branches"
+
+# Required Status Checks:
+# The following checks must pass before merging:
+# - test (from CI workflow)
+# - lint (from CI workflow)
+
+# Workflow Permissions:
+# 1. Go to GitHub Repository Settings > Actions > General
+# 2. Set "Workflow permissions" to "Read and write permissions"
+# 3. Check "Allow GitHub Actions to create and approve pull requests"
+
+# Security Settings:
+# 1. Enable "Require a pull request before merging"
+# 2. Enable "Require status checks to pass before merging"
+# 3. Enable "Require branches to be up to date before merging"
+# 4. Enable "Require conversation resolution before merging"
