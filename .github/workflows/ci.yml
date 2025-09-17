@@ -2,10 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ 'feature/*', 'bugfix/*', 'hotfix/*' ]
-  pull_request:
-    branches: [ main ]
-    types: [ opened, synchronize, reopened ]
+    branches: [ 'feature/*', 'bugfix/*', 'hotfix/*', 'main' ]
 
 jobs:
   test:
@@ -29,52 +26,3 @@ jobs:
     
     - name: Run tests
       run: npm test -- --watchAll=false --coverage
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      if: github.event_name == 'pull_request'
-
-
-  # Version tagging - runs after manual merge to main
-  version-tag:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Extract version from commit
-      id: version
-      run: |
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
-        MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
-        PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
-        
-        # Increment patch version
-        NEW_PATCH=$((PATCH + 1))
-        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-        
-        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        echo "New version: $NEW_VERSION"
-    
-    - name: Create version tag
-      run: |
-        git config --local user.email "ai-agent@github.com"
-        git config --local user.name "🤖 AI Release Agent"
-        git tag -a "v${{ steps.version.outputs.new_version }}" -m "🚀 Release v${{ steps.version.outputs.new_version }}: ${{ github.event.head_commit.message }}"
-        git push origin "v${{ steps.version.outputs.new_version }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
