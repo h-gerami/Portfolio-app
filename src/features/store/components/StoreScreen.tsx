@@ -14,19 +14,28 @@ import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
 import { ProductCard } from "./ProductCard";
 import { CategoryTabs } from "./CategoryTabs";
+import { PetTypeTabs } from "./PetTypeTabs";
 import { petProducts } from "../data";
-import { PetProduct, CategoryTab, CATEGORIES } from "../types";
+import { PetProduct, CategoryTab, CATEGORIES, PET_TYPES } from "../types";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function StoreScreen() {
   const colorScheme = useColorScheme();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedPetType, setSelectedPetType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filter products by category and search
+  // Filter products by category, pet type, and search
   const filteredProducts = useMemo(() => {
     let filtered = petProducts;
+
+    // Pet type filter
+    if (selectedPetType !== "all") {
+      filtered = filtered.filter(
+        (p) => p.petType === selectedPetType
+      );
+    }
 
     // Category filter
     if (selectedCategory !== "all") {
@@ -47,7 +56,7 @@ export default function StoreScreen() {
     }
 
     return filtered;
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, selectedPetType, searchQuery]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -102,6 +111,13 @@ export default function StoreScreen() {
           </View>
         </View>
       </LinearGradient>
+
+      {/* Pet Type Tabs */}
+      <PetTypeTabs
+        petTypes={PET_TYPES}
+        activeKey={selectedPetType}
+        onSelect={setSelectedPetType}
+      />
 
       {/* Category Tabs */}
       <CategoryTabs

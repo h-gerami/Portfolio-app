@@ -8,7 +8,9 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/FontAwesome";
+import IconFeather from "react-native-vector-icons/Feather";
 import { PetProduct } from "../types";
+import { useCartStore } from "@/src/store/useCartStore";
 
 type ProductCardProps = {
   product: PetProduct;
@@ -18,11 +20,47 @@ type ProductCardProps = {
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const { addToCart, isInCart, removeFromCart, updateQuantity, items } = useCartStore();
+  
+  const cartItem = items.find((item) => item.product.id === product.id);
+  const inCart = !!cartItem;
+  const currentQuantity = cartItem?.quantity || 0;
   
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
     ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
     : 0;
+
+  const handleAddToCart = () => {
+    if (product.inStock && !inCart) {
+      // Show quantity selector first time
+      if (!showQuantitySelector) {
+        setShowQuantitySelector(true);
+      }
+    }
+  };
+
+  const handleConfirmAdd = () => {
+    if (product.inStock) {
+      addToCart(product, quantity);
+      setShowQuantitySelector(false);
+      setQuantity(1);
+    }
+  };
+
+  const handleRemove = () => {
+    removeFromCart(product.id);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(product.id);
+    } else {
+      updateQuantity(product.id, newQuantity);
+    }
+  };
 
   // Determine category emoji for fallback
   const getCategoryEmoji = () => {
@@ -131,6 +169,78 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
             <Text style={styles.originalPrice}>${product.originalPrice!.toFixed(2)}</Text>
           )}
         </View>
+
+        {/* Quantity Selector or Add to Cart Button */}
+        {showQuantitySelector && !inCart ? (
+          <View style={styles.quantitySelector}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+            >
+              <IconFeather name="minus" size={16} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{quantity}</Text>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => setQuantity(Math.min(10, quantity + 1))}
+            >
+              <IconFeather name="plus" size={16} color="#111827" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.confirmButton, !product.inStock && styles.addToCartButtonDisabled]}
+              onPress={handleConfirmAdd}
+              disabled={!product.inStock}
+            >
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowQuantitySelector(false);
+                setQuantity(1);
+              }}
+            >
+              <IconFeather name="x" size={16} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+        ) : inCart ? (
+          <View style={styles.quantityControls}>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => handleQuantityChange(currentQuantity - 1)}
+            >
+              <IconFeather name="minus" size={14} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.qtyText}>{currentQuantity}</Text>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => handleQuantityChange(currentQuantity + 1)}
+            >
+              <IconFeather name="plus" size={14} color="#111827" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={handleRemove}
+            >
+              <IconFeather name="trash-2" size={14} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.addToCartButton,
+              !product.inStock && styles.addToCartButtonDisabled,
+            ]}
+            onPress={handleAddToCart}
+            disabled={!product.inStock}
+            activeOpacity={0.7}
+          >
+            <IconFeather name="shopping-cart" size={16} color="#FFFFFF" />
+            <Text style={styles.addToCartText}>
+              {product.inStock ? "Add to Cart" : "Out of Stock"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -280,6 +390,107 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#9CA3AF",
     textDecorationLine: "line-through",
+  },
+  addToCartButton: {
+    marginTop: 12,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  addToCartButtonDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  addToCartButtonAdded: {
+    backgroundColor: "#10B981",
+  },
+  addToCartText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  quantitySelector: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  quantityText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111827",
+    minWidth: 30,
+    textAlign: "center",
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: "#111827",
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  cancelButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityControls: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    padding: 6,
+  },
+  qtyButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  qtyText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111827",
+    minWidth: 24,
+    textAlign: "center",
+  },
+  removeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "#FEE2E2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: "auto",
   },
 });
 

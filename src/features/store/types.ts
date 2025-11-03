@@ -53,17 +53,17 @@ export type PetTypeTab = {
 
 export const PET_TYPES: PetTypeTab[] = [
   { label: "All Pets", key: "all", icon: "paw-outline", emoji: "🐾" },
-  { label: "Dogs", key: "dog", icon: "md-paw", emoji: "🐕" },
-  { label: "Cats", key: "cat", icon: "md-paw", emoji: "🐈" },
+  { label: "Dogs", key: "dog", icon: "paw-outline", emoji: "🐕" },
+  { label: "Cats", key: "cat", icon: "paw-outline", emoji: "🐈" },
   { label: "Birds", key: "bird", icon: "bird-outline", emoji: "🐦" },
   { label: "Fish", key: "fish", icon: "water-outline", emoji: "🐠" },
   { label: "Reptiles", key: "reptile", icon: "bug-outline", emoji: "🦎" },
-  { label: "Rabbits", key: "rabbit", icon: "md-paw", emoji: "🐰" },
-  { label: "Hamsters", key: "hamster", icon: "md-paw", emoji: "🐹" },
-  { label: "Guinea Pigs", key: "guinea-pig", icon: "md-paw", emoji: "🐹" },
-  { label: "Ferrets", key: "ferret", icon: "md-paw", emoji: "🦡" },
-  { label: "Turtles", key: "turtle", icon: "md-paw", emoji: "🐢" },
-  { label: "Hedgehogs", key: "hedgehog", icon: "md-paw", emoji: "🦔" },
-  { label: "Chinchillas", key: "chinchilla", icon: "md-paw", emoji: "🐭" },
+  { label: "Rabbits", key: "rabbit", icon: "paw-outline", emoji: "🐰" },
+  { label: "Hamsters", key: "hamster", icon: "paw-outline", emoji: "🐹" },
+  { label: "Guinea Pigs", key: "guinea-pig", icon: "paw-outline", emoji: "🐹" },
+  { label: "Ferrets", key: "ferret", icon: "paw-outline", emoji: "🦡" },
+  { label: "Turtles", key: "turtle", icon: "paw-outline", emoji: "🐢" },
+  { label: "Hedgehogs", key: "hedgehog", icon: "paw-outline", emoji: "🦔" },
+  { label: "Chinchillas", key: "chinchilla", icon: "paw-outline", emoji: "🐭" },
 ];
 

@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
+import { CartBadge } from "@/components/CartBadge";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -85,9 +86,7 @@ export default function TabLayout() {
         name="store"
         options={{
           title: "Store",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bag.fill" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <CartBadge size={28} color={color} />,
         }}
       />
     </Tabs>
