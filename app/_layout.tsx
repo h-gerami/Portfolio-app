@@ -1,3 +1,4 @@
+import React from "react";
 import {
   DarkTheme,
   DefaultTheme,
@@ -10,7 +11,8 @@ import "react-native-reanimated";
 import { AppState, Platform } from "react-native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import * as Sentry from "@sentry/react-native";
+// Sentry disabled for Expo Go compatibility
+// import * as Sentry from "@sentry/react-native";
 
 // ── React Query
 import {
@@ -38,19 +40,20 @@ AppState.addEventListener("change", (state) => {
   focusManager.setFocused(state === "active");
 });
 
-Sentry.init({
-  dsn: "https://855c2d0dc9e7b0455c34120af9239fb3@o4509785381404672.ingest.us.sentry.io/4509785386057729",
-  sendDefaultPii: true,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [
-    Sentry.mobileReplayIntegration(),
-    Sentry.feedbackIntegration(),
-  ],
-  // spotlight: __DEV__,
-});
+// Sentry disabled for Expo Go compatibility
+// Sentry.init({
+//   dsn: "https://855c2d0dc9e7b0455c34120af9239fb3@o4509785381404672.ingest.us.sentry.io/4509785386057729",
+//   sendDefaultPii: true,
+//   replaysSessionSampleRate: 0.1,
+//   replaysOnErrorSampleRate: 1,
+//   integrations: [
+//     Sentry.mobileReplayIntegration(),
+//     Sentry.feedbackIntegration(),
+//   ],
+//   // spotlight: __DEV__,
+// });
 
-export default Sentry.wrap(function RootLayout() {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),

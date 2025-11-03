@@ -8,12 +8,11 @@
     "icon": "./assets/images/HG-splash.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "privacy": "public",
     "androidStatusBar": {
       "barStyle": "light-content",
       "translucent": true
     },
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hossein100.hosseinportfolio"
@@ -42,14 +41,6 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "project": "react-native",
-          "organization": "hossein-cf"
-        }
-      ]
     ],
     "experiments": {
       "typedRoutes": true
