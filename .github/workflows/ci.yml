@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ 'feature/*', 'bugfix/*', 'hotfix/*' ]
+    branches: [ 'feature/*', 'bugfix/*', 'hotfix/*', 'main' ]
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize, reopened ]
