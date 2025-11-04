@@ -306,13 +306,10 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    width: "100%",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     overflow: "hidden",
-    marginBottom: 16,
-    minWidth: "47%",
-    maxWidth: "47%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,

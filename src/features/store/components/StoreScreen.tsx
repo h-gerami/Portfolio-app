@@ -322,10 +322,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    gap: 12,
   },
   productWrapper: {
-    width: "47%",
+    width: "48%",
     marginBottom: 16,
   },
   bottomSpacing: {

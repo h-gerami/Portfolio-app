@@ -17,9 +17,10 @@ export type Article = {
 type ArticleCardProps = {
   article: Article;
   onPress?: (article: Article) => void;
+  width?: number;
 };
 
-export function ArticleCard({ article, onPress }: ArticleCardProps) {
+export function ArticleCard({ article, onPress, width = 320 }: ArticleCardProps) {
   const categoryColors = {
     vet: "#EF4444",
     insurance: "#3B82F6",
@@ -36,7 +37,7 @@ export function ArticleCard({ article, onPress }: ArticleCardProps) {
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { width }]}
       onPress={() => onPress?.(article)}
       activeOpacity={0.8}
     >

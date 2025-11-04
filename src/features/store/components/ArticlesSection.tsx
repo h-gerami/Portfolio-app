@@ -34,12 +34,17 @@ export function ArticlesSection({
       <FlatList
         data={featuredArticles}
         renderItem={({ item }) => (
-          <ArticleCard article={item} onPress={onArticlePress} />
+          <ArticleCard 
+            article={item} 
+            onPress={onArticlePress} 
+            width={280}
+          />
         )}
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
       />
     </View>
   );
@@ -79,7 +84,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    gap: 16,
   },
 });
 
