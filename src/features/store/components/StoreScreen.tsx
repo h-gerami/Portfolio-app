@@ -4,6 +4,7 @@ import {
   FlatList,
   RefreshControl,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,11 +16,15 @@ import Icon from "react-native-vector-icons/Feather";
 import { ProductCard } from "./ProductCard";
 import { CategoryTabs } from "./CategoryTabs";
 import { PetTypeTabs } from "./PetTypeTabs";
+import { HeroBanner } from "./HeroBanner";
+import { QuickActions } from "./QuickActions";
+import { ArticlesSection } from "./ArticlesSection";
+import { Article } from "./ArticleCard";
 import { PetProduct, CategoryTab, CATEGORIES, PET_TYPES } from "../types";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProducts, useCart } from "../hooks";
 import { useCartStore } from "@/src/store/useCartStore";
-import { useEffect } from "react";
+import Toast from "react-native-toast-message";
 
 export default function StoreScreen() {
   const colorScheme = useColorScheme();
@@ -70,6 +75,24 @@ export default function StoreScreen() {
   };
 
   const refreshing = isRefetching;
+
+  const handleQuickAction = (actionId: string) => {
+    Toast.show({
+      type: "info",
+      text1: "Coming Soon",
+      text2: `${actionId} feature will be available soon`,
+      position: "bottom",
+    });
+  };
+
+  const handleArticlePress = (article: Article) => {
+    Toast.show({
+      type: "info",
+      text1: article.title,
+      text2: "Article details coming soon",
+      position: "bottom",
+    });
+  };
 
   const renderProduct = ({ item }: { item: PetProduct }) => (
     <ProductCard product={item} />
@@ -148,44 +171,70 @@ export default function StoreScreen() {
         </View>
       )}
 
-      {/* Products Grid */}
+      {/* Main Content Scroll */}
       {isLoading && filteredProducts.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#111827" />
           <Text style={styles.loadingText}>Loading products...</Text>
         </View>
-      ) : filteredProducts.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Icon name="package" size={48} color="#D1D5DB" />
-          <Text style={styles.emptyText}>
-            {searchQuery ? "No products found" : "No products available"}
-          </Text>
-          {searchQuery && (
-            <Text style={styles.emptySubtext}>
-              Try adjusting your search or filters
-            </Text>
-          )}
-        </View>
       ) : (
-        <FlatList
-          data={filteredProducts}
-          renderItem={renderProduct}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.listContent}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
-          ListHeaderComponent={
-            <View style={styles.headerStats}>
-              <Text style={styles.statsText}>
+        >
+          {/* Hero Banner */}
+          <HeroBanner />
+
+          {/* Quick Actions */}
+          <QuickActions onActionPress={handleQuickAction} />
+
+          {/* Articles Section */}
+          <ArticlesSection
+            onArticlePress={handleArticlePress}
+            onViewAllPress={() => handleQuickAction("articles")}
+          />
+
+          {/* Products Section */}
+          <View style={styles.productsSection}>
+            <View style={styles.productsHeader}>
+              <Text style={styles.productsSectionTitle}>
+                {searchQuery || selectedCategory !== "all" || selectedPetType !== "all"
+                  ? "Search Results"
+                  : "Featured Products"}
+              </Text>
+              <Text style={styles.productsCount}>
                 {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
               </Text>
             </View>
-          }
-          showsVerticalScrollIndicator={false}
-        />
+
+            {filteredProducts.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Icon name="package" size={48} color="#D1D5DB" />
+                <Text style={styles.emptyText}>
+                  {searchQuery ? "No products found" : "No products available"}
+                </Text>
+                {searchQuery && (
+                  <Text style={styles.emptySubtext}>
+                    Try adjusting your search or filters
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <View style={styles.productsGrid}>
+                {filteredProducts.map((product) => (
+                  <View key={product.id} style={styles.productWrapper}>
+                    <ProductCard product={product} />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -249,22 +298,38 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
   },
-  row: {
+  productsSection: {
+    marginTop: 32,
     paddingHorizontal: 16,
-    gap: 12,
   },
-  listContent: {
-    paddingTop: 16,
-    paddingBottom: 24,
+  productsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
-  headerStats: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+  productsSectionTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#111827",
   },
-  statsText: {
+  productsCount: {
     fontSize: 14,
     fontWeight: "600",
     color: "#6B7280",
+  },
+  productsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  productWrapper: {
+    width: "47%",
+    marginBottom: 16,
+  },
+  bottomSpacing: {
+    height: 24,
   },
   emptyContainer: {
     flex: 1,
