@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -43,28 +43,18 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
     : 0;
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!product.inStock) return;
 
-    // Optimistically update local state first (instant UI update)
-    useCartStore.getState().addToCart(product, 1);
-
-    // Sync with backend silently in background (no loading state)
+    // React Query will handle optimistic update via onMutate
     addToCartMutation.mutate(
       {
         productId: product.id,
         quantity: 1,
+        product,
       },
       {
-        onSuccess: (result) => {
-          // Update with backend response ID
-          if (result?.id) {
-            useCartStore.getState().syncCartItem(product.id, result.id);
-          }
-        },
         onError: (error: any) => {
-          // Rollback on error
-          useCartStore.getState().removeFromCart(product.id);
           Toast.show({
             type: "error",
             text1: "Failed to add item",
@@ -76,28 +66,22 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     );
   };
 
-  const handleQuantityAdjust = (newQuantity: number) => {
-    if (newQuantity < 1) {
-      handleRemove();
-      return;
-    }
+  // Debounced quantity update (500ms delay)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingQuantityRef = useRef<number | null>(null);
 
-    if (inCart) {
-      // Optimistically update local state first (instant UI update)
-      const previousQuantity = currentQuantity;
-      useCartStore.getState().updateQuantity(product.id, newQuantity);
-
-      // Sync with backend silently in background
-      if (cartItemId) {
+  const debouncedQuantityUpdate = useCallback(
+    (newQuantity: number) => {
+      if (cartItemId && inCart) {
+        // React Query will handle optimistic update via onMutate
         updateCartMutation.mutate(
           {
             itemId: cartItemId,
             quantity: newQuantity,
+            productId: product.id,
           },
           {
             onError: (error: any) => {
-              // Rollback on error
-              useCartStore.getState().updateQuantity(product.id, previousQuantity);
               Toast.show({
                 type: "error",
                 text1: "Update failed",
@@ -108,36 +92,63 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           }
         );
       }
+    },
+    [cartItemId, inCart, product.id, updateCartMutation]
+  );
+
+  const handleQuantityAdjust = (newQuantity: number) => {
+    if (newQuantity < 1) {
+      handleRemove();
+      return;
+    }
+
+    if (inCart) {
+      // Optimistically update local state immediately (instant UI feedback)
+      useCartStore.getState().updateQuantity(product.id, newQuantity);
+
+      // Clear existing debounce timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Store pending quantity
+      pendingQuantityRef.current = newQuantity;
+
+      // Debounce backend sync (500ms)
+      debounceTimeoutRef.current = setTimeout(() => {
+        if (pendingQuantityRef.current !== null) {
+          debouncedQuantityUpdate(pendingQuantityRef.current);
+          pendingQuantityRef.current = null;
+        }
+      }, 500);
     } else if (product.inStock) {
       handleAddToCart();
     }
   };
 
   const handleRemove = () => {
-    // Optimistically remove from local state first (instant UI update)
-    const previousItem = cartItem;
-    useCartStore.getState().removeFromCart(product.id);
+    // Clear any pending debounced updates
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+    pendingQuantityRef.current = null;
 
-    // Sync with backend silently in background
+    // React Query will handle optimistic update via onMutate
     if (cartItemId) {
-      removeCartMutation.mutate(cartItemId, {
-        onError: (error: any) => {
-          // Rollback on error
-          if (previousItem) {
-            useCartStore.getState().addToCart(
-              previousItem.product,
-              previousItem.quantity,
-              previousItem.id
-            );
-          }
-          Toast.show({
-            type: "error",
-            text1: "Failed to remove",
-            text2: error.message || "Please try again",
-            position: "bottom",
-          });
-        },
-      });
+      removeCartMutation.mutate(
+        { itemId: cartItemId, productId: product.id },
+        {
+          onError: (error: any) => {
+            Toast.show({
+              type: "error",
+              text1: "Failed to remove",
+              text2: error.message || "Please try again",
+              position: "bottom",
+            });
+          },
+        }
+      );
     }
   };
 
