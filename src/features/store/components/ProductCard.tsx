@@ -20,8 +20,6 @@ type ProductCardProps = {
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const [showQuantitySelector, setShowQuantitySelector] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const { addToCart, isInCart, removeFromCart, updateQuantity, items } = useCartStore();
   
   const cartItem = items.find((item) => item.product.id === product.id);
@@ -34,32 +32,28 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     : 0;
 
   const handleAddToCart = () => {
-    if (product.inStock && !inCart) {
-      // Show quantity selector first time
-      if (!showQuantitySelector) {
-        setShowQuantitySelector(true);
+    if (product.inStock) {
+      // Auto-add to cart with quantity 1, then show quantity controls
+      if (!inCart) {
+        addToCart(product, 1);
       }
     }
   };
 
-  const handleConfirmAdd = () => {
-    if (product.inStock) {
-      addToCart(product, quantity);
-      setShowQuantitySelector(false);
-      setQuantity(1);
+  const handleQuantityAdjust = (newQuantity: number) => {
+    if (newQuantity < 1) {
+      removeFromCart(product.id);
+      return;
+    }
+    if (inCart) {
+      updateQuantity(product.id, newQuantity);
+    } else if (product.inStock) {
+      addToCart(product, newQuantity);
     }
   };
 
   const handleRemove = () => {
     removeFromCart(product.id);
-  };
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(product.id);
-    } else {
-      updateQuantity(product.id, newQuantity);
-    }
   };
 
   // Determine category emoji for fallback
@@ -170,51 +164,19 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           )}
         </View>
 
-        {/* Quantity Selector or Add to Cart Button */}
-        {showQuantitySelector && !inCart ? (
-          <View style={styles.quantitySelector}>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setQuantity(Math.max(1, quantity - 1))}
-            >
-              <IconFeather name="minus" size={16} color="#111827" />
-            </TouchableOpacity>
-            <Text style={styles.quantityText}>{quantity}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setQuantity(Math.min(10, quantity + 1))}
-            >
-              <IconFeather name="plus" size={16} color="#111827" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.confirmButton, !product.inStock && styles.addToCartButtonDisabled]}
-              onPress={handleConfirmAdd}
-              disabled={!product.inStock}
-            >
-              <Text style={styles.confirmButtonText}>Confirm</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => {
-                setShowQuantitySelector(false);
-                setQuantity(1);
-              }}
-            >
-              <IconFeather name="x" size={16} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
-        ) : inCart ? (
+        {/* Quantity Controls or Add to Cart Button */}
+        {inCart ? (
           <View style={styles.quantityControls}>
             <TouchableOpacity
               style={styles.qtyButton}
-              onPress={() => handleQuantityChange(currentQuantity - 1)}
+              onPress={() => handleQuantityAdjust(currentQuantity - 1)}
             >
               <IconFeather name="minus" size={14} color="#111827" />
             </TouchableOpacity>
             <Text style={styles.qtyText}>{currentQuantity}</Text>
             <TouchableOpacity
               style={styles.qtyButton}
-              onPress={() => handleQuantityChange(currentQuantity + 1)}
+              onPress={() => handleQuantityAdjust(currentQuantity + 1)}
             >
               <IconFeather name="plus" size={14} color="#111827" />
             </TouchableOpacity>
@@ -412,50 +374,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
-  },
-  quantitySelector: {
-    marginTop: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  quantityText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111827",
-    minWidth: 30,
-    textAlign: "center",
-  },
-  confirmButton: {
-    flex: 1,
-    backgroundColor: "#111827",
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: "center",
-  },
-  confirmButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  cancelButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
   },
   quantityControls: {
     marginTop: 12,
