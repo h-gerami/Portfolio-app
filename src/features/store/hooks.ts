@@ -54,8 +54,9 @@ export function useAddToCart() {
     mutationFn: ({ productId, quantity }: { productId: string; quantity: number }) =>
       addToCartAPI(productId, quantity),
     onSuccess: () => {
-      // Invalidate and refetch cart
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
+      // Don't invalidate cart query - we're using optimistic updates
+      // This prevents clearing local state when backend hasn't synced yet
+      // queryClient.invalidateQueries({ queryKey: queryKeys.cart });
     },
     onError: (error) => {
       console.error("Failed to add to cart:", error);
@@ -70,7 +71,8 @@ export function useUpdateCartItem() {
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
       updateCartItemAPI(itemId, quantity),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
+      // Don't invalidate cart query - we're using optimistic updates
+      // queryClient.invalidateQueries({ queryKey: queryKeys.cart });
     },
     onError: (error) => {
       console.error("Failed to update cart item:", error);
@@ -84,7 +86,8 @@ export function useRemoveCartItem() {
   return useMutation({
     mutationFn: (itemId: string) => removeCartItemAPI(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
+      // Don't invalidate cart query - we're using optimistic updates
+      // queryClient.invalidateQueries({ queryKey: queryKeys.cart });
     },
     onError: (error) => {
       console.error("Failed to remove cart item:", error);

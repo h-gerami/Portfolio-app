@@ -30,16 +30,8 @@ export default function StoreScreen() {
   // Fetch products from API
   const { data: products = [], isLoading, error, refetch, isRefetching } = useProducts();
   
-  // Sync cart with backend
-  const { data: cartData } = useCart();
-  const syncCartFromBackend = useCartStore((state) => state.syncCartFromBackend);
-  
-  // Sync cart when backend data arrives
-  useEffect(() => {
-    if (cartData?.items) {
-      syncCartFromBackend(cartData.items);
-    }
-  }, [cartData, syncCartFromBackend]);
+  // Don't auto-fetch cart to prevent clearing local state
+  // Cart will be synced via mutations only
 
   // Filter products by category, pet type, and search
   const filteredProducts = useMemo(() => {

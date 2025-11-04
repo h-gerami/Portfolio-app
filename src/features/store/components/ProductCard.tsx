@@ -51,14 +51,19 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
   const handleAddToCart = async () => {
     if (!product.inStock || isLoading) return;
 
+    // Optimistically update local state first
+    useCartStore.getState().addToCart(product, 1);
+
     try {
       const result = await addToCartMutation.mutateAsync({
         productId: product.id,
         quantity: 1,
       });
       
-      // Update local state with backend response
-      useCartStore.getState().addToCart(product, 1, result.id);
+      // Update with backend response ID
+      if (result?.id) {
+        useCartStore.getState().syncCartItem(product.id, result.id);
+      }
       
       Toast.show({
         type: "success",
@@ -67,6 +72,9 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         position: "bottom",
       });
     } catch (error: any) {
+      // Rollback on error
+      useCartStore.getState().removeFromCart(product.id);
+      
       Toast.show({
         type: "error",
         text1: "Failed to add item",
@@ -84,15 +92,18 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
       return;
     }
 
-    if (inCart && cartItemId) {
+    if (inCart) {
+      // Optimistically update local state first
+      const previousQuantity = currentQuantity;
+      useCartStore.getState().updateQuantity(product.id, newQuantity);
+
       try {
-        await updateCartMutation.mutateAsync({
-          itemId: cartItemId,
-          quantity: newQuantity,
-        });
-        
-        // Optimistically update local state
-        useCartStore.getState().updateQuantity(product.id, newQuantity);
+        if (cartItemId) {
+          await updateCartMutation.mutateAsync({
+            itemId: cartItemId,
+            quantity: newQuantity,
+          });
+        }
         
         Toast.show({
           type: "success",
@@ -102,6 +113,9 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           visibilityTime: 2000,
         });
       } catch (error: any) {
+        // Rollback on error
+        useCartStore.getState().updateQuantity(product.id, previousQuantity);
+        
         Toast.show({
           type: "error",
           text1: "Update failed",
@@ -115,13 +129,16 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
   };
 
   const handleRemove = async () => {
-    if (!cartItemId || isLoading) return;
+    if (isLoading) return;
+
+    // Optimistically remove from local state first
+    const previousItem = cartItem;
+    useCartStore.getState().removeFromCart(product.id);
 
     try {
-      await removeCartMutation.mutateAsync(cartItemId);
-      
-      // Optimistically update local state
-      useCartStore.getState().removeFromCart(product.id);
+      if (cartItemId) {
+        await removeCartMutation.mutateAsync(cartItemId);
+      }
       
       Toast.show({
         type: "success",
@@ -131,6 +148,11 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         visibilityTime: 2000,
       });
     } catch (error: any) {
+      // Rollback on error
+      if (previousItem) {
+        useCartStore.getState().addToCart(previousItem.product, previousItem.quantity, previousItem.id);
+      }
+      
       Toast.show({
         type: "error",
         text1: "Failed to remove",
