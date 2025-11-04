@@ -212,7 +212,7 @@ export const petProducts: PetProduct[] = [
     name: "Bird Swing with Bell",
     description: "Colorful swing toy with bell attachment. Encourages play and exercise.",
     price: 12.99,
-    image: "https://images.unsplash.com/photo-1595433707802-6b2626ef1c91?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&h=400&fit=crop",
     category: "toys",
     petType: "bird",
     rating: 4.7,
