@@ -11,6 +11,7 @@ import "react-native-reanimated";
 import { AppState, Platform } from "react-native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import Toast from "react-native-toast-message";
 // Sentry disabled for Expo Go compatibility
 // import * as Sentry from "@sentry/react-native";
 
@@ -69,6 +70,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
+        <Toast />
       </ThemeProvider>
     </QueryClientProvider>
   );

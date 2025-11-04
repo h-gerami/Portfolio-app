@@ -15,20 +15,35 @@ import Icon from "react-native-vector-icons/Feather";
 import { ProductCard } from "./ProductCard";
 import { CategoryTabs } from "./CategoryTabs";
 import { PetTypeTabs } from "./PetTypeTabs";
-import { petProducts } from "../data";
 import { PetProduct, CategoryTab, CATEGORIES, PET_TYPES } from "../types";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useProducts, useCart } from "../hooks";
+import { useCartStore } from "@/src/store/useCartStore";
+import { useEffect } from "react";
 
 export default function StoreScreen() {
   const colorScheme = useColorScheme();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPetType, setSelectedPetType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
+  
+  // Fetch products from API
+  const { data: products = [], isLoading, error, refetch, isRefetching } = useProducts();
+  
+  // Sync cart with backend
+  const { data: cartData } = useCart();
+  const syncCartFromBackend = useCartStore((state) => state.syncCartFromBackend);
+  
+  // Sync cart when backend data arrives
+  useEffect(() => {
+    if (cartData?.items) {
+      syncCartFromBackend(cartData.items);
+    }
+  }, [cartData, syncCartFromBackend]);
 
   // Filter products by category, pet type, and search
   const filteredProducts = useMemo(() => {
-    let filtered = petProducts;
+    let filtered = products;
 
     // Pet type filter
     if (selectedPetType !== "all") {
@@ -56,13 +71,13 @@ export default function StoreScreen() {
     }
 
     return filtered;
-  }, [selectedCategory, selectedPetType, searchQuery]);
+  }, [products, selectedCategory, selectedPetType, searchQuery]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    // Simulate refresh delay
-    setTimeout(() => setRefreshing(false), 1000);
+  const handleRefresh = async () => {
+    await refetch();
   };
+
+  const refreshing = isRefetching;
 
   const renderProduct = ({ item }: { item: PetProduct }) => (
     <ProductCard product={item} />
@@ -126,8 +141,28 @@ export default function StoreScreen() {
         onSelect={setSelectedCategory}
       />
 
+      {/* Error Banner */}
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>
+            Failed to load products: {error.message}
+          </Text>
+          <TouchableOpacity
+            onPress={() => refetch()}
+            style={styles.retryButton}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Products Grid */}
-      {filteredProducts.length === 0 ? (
+      {isLoading && filteredProducts.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#111827" />
+          <Text style={styles.loadingText}>Loading products...</Text>
+        </View>
+      ) : filteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Icon name="package" size={48} color="#D1D5DB" />
           <Text style={styles.emptyText}>
@@ -255,6 +290,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#D1D5DB",
     marginTop: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  errorBanner: {
+    backgroundColor: "#FEE2E2",
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  errorText: {
+    color: "#B91C1C",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: "#B91C1C",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
 

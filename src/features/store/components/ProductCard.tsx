@@ -9,8 +9,14 @@ import {
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconFeather from "react-native-vector-icons/Feather";
+import Toast from "react-native-toast-message";
 import { PetProduct } from "../types";
 import { useCartStore } from "@/src/store/useCartStore";
+import {
+  useAddToCart,
+  useRemoveCartItem,
+  useUpdateCartItem,
+} from "../hooks";
 
 type ProductCardProps = {
   product: PetProduct;
@@ -20,40 +26,118 @@ type ProductCardProps = {
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const { addToCart, isInCart, removeFromCart, updateQuantity, items } = useCartStore();
+  const { items } = useCartStore();
   
   const cartItem = items.find((item) => item.product.id === product.id);
   const inCart = !!cartItem;
   const currentQuantity = cartItem?.quantity || 0;
+  const cartItemId = cartItem?.id;
+  
+  // React Query mutations for backend sync
+  const addToCartMutation = useAddToCart();
+  const updateCartMutation = useUpdateCartItem();
+  const removeCartMutation = useRemoveCartItem();
+  
+  const isLoading =
+    addToCartMutation.isPending ||
+    updateCartMutation.isPending ||
+    removeCartMutation.isPending;
   
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
     ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
     : 0;
 
-  const handleAddToCart = () => {
-    if (product.inStock) {
-      // Auto-add to cart with quantity 1, then show quantity controls
-      if (!inCart) {
-        addToCart(product, 1);
-      }
+  const handleAddToCart = async () => {
+    if (!product.inStock || isLoading) return;
+
+    try {
+      const result = await addToCartMutation.mutateAsync({
+        productId: product.id,
+        quantity: 1,
+      });
+      
+      // Update local state with backend response
+      useCartStore.getState().addToCart(product, 1, result.id);
+      
+      Toast.show({
+        type: "success",
+        text1: "Added to cart!",
+        text2: `${product.name} added successfully`,
+        position: "bottom",
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to add item",
+        text2: error.message || "Please try again",
+        position: "bottom",
+      });
     }
   };
 
-  const handleQuantityAdjust = (newQuantity: number) => {
+  const handleQuantityAdjust = async (newQuantity: number) => {
+    if (isLoading) return;
+
     if (newQuantity < 1) {
-      removeFromCart(product.id);
+      await handleRemove();
       return;
     }
-    if (inCart) {
-      updateQuantity(product.id, newQuantity);
+
+    if (inCart && cartItemId) {
+      try {
+        await updateCartMutation.mutateAsync({
+          itemId: cartItemId,
+          quantity: newQuantity,
+        });
+        
+        // Optimistically update local state
+        useCartStore.getState().updateQuantity(product.id, newQuantity);
+        
+        Toast.show({
+          type: "success",
+          text1: "Quantity updated",
+          text2: `Updated to ${newQuantity} item${newQuantity > 1 ? "s" : ""}`,
+          position: "bottom",
+          visibilityTime: 2000,
+        });
+      } catch (error: any) {
+        Toast.show({
+          type: "error",
+          text1: "Update failed",
+          text2: error.message || "Please try again",
+          position: "bottom",
+        });
+      }
     } else if (product.inStock) {
-      addToCart(product, newQuantity);
+      await handleAddToCart();
     }
   };
 
-  const handleRemove = () => {
-    removeFromCart(product.id);
+  const handleRemove = async () => {
+    if (!cartItemId || isLoading) return;
+
+    try {
+      await removeCartMutation.mutateAsync(cartItemId);
+      
+      // Optimistically update local state
+      useCartStore.getState().removeFromCart(product.id);
+      
+      Toast.show({
+        type: "success",
+        text1: "Removed from cart",
+        text2: `${product.name} removed`,
+        position: "bottom",
+        visibilityTime: 2000,
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to remove",
+        text2: error.message || "Please try again",
+        position: "bottom",
+      });
+    }
   };
 
   // Determine category emoji for fallback
@@ -168,39 +252,60 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         {inCart ? (
           <View style={styles.quantityControls}>
             <TouchableOpacity
-              style={styles.qtyButton}
+              style={[styles.qtyButton, isLoading && styles.qtyButtonDisabled]}
               onPress={() => handleQuantityAdjust(currentQuantity - 1)}
+              disabled={isLoading}
             >
-              <IconFeather name="minus" size={14} color="#111827" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#111827" />
+              ) : (
+                <IconFeather name="minus" size={14} color="#111827" />
+              )}
             </TouchableOpacity>
             <Text style={styles.qtyText}>{currentQuantity}</Text>
             <TouchableOpacity
-              style={styles.qtyButton}
+              style={[styles.qtyButton, isLoading && styles.qtyButtonDisabled]}
               onPress={() => handleQuantityAdjust(currentQuantity + 1)}
+              disabled={isLoading}
             >
-              <IconFeather name="plus" size={14} color="#111827" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#111827" />
+              ) : (
+                <IconFeather name="plus" size={14} color="#111827" />
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.removeButton}
+              style={[styles.removeButton, isLoading && styles.qtyButtonDisabled]}
               onPress={handleRemove}
+              disabled={isLoading}
             >
-              <IconFeather name="trash-2" size={14} color="#EF4444" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#EF4444" />
+              ) : (
+                <IconFeather name="trash-2" size={14} color="#EF4444" />
+              )}
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity
             style={[
               styles.addToCartButton,
-              !product.inStock && styles.addToCartButtonDisabled,
+              (!product.inStock || isLoading) && styles.addToCartButtonDisabled,
             ]}
             onPress={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={!product.inStock || isLoading}
             activeOpacity={0.7}
           >
-            <IconFeather name="shopping-cart" size={16} color="#FFFFFF" />
-            <Text style={styles.addToCartText}>
-              {product.inStock ? "Add to Cart" : "Out of Stock"}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <IconFeather name="shopping-cart" size={16} color="#FFFFFF" />
+                <Text style={styles.addToCartText}>
+                  {product.inStock ? "Add to Cart" : "Out of Stock"}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -409,6 +514,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: "auto",
+  },
+  qtyButtonDisabled: {
+    opacity: 0.5,
   },
 });
 
