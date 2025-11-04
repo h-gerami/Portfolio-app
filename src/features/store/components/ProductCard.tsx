@@ -33,15 +33,10 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
   const currentQuantity = cartItem?.quantity || 0;
   const cartItemId = cartItem?.id;
   
-  // React Query mutations for backend sync
+  // React Query mutations for backend sync (silent, no loading indicators)
   const addToCartMutation = useAddToCart();
   const updateCartMutation = useUpdateCartItem();
   const removeCartMutation = useRemoveCartItem();
-  
-  const isLoading =
-    addToCartMutation.isPending ||
-    updateCartMutation.isPending ||
-    removeCartMutation.isPending;
   
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
@@ -49,115 +44,99 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     : 0;
 
   const handleAddToCart = async () => {
-    if (!product.inStock || isLoading) return;
+    if (!product.inStock) return;
 
-    // Optimistically update local state first
+    // Optimistically update local state first (instant UI update)
     useCartStore.getState().addToCart(product, 1);
 
-    try {
-      const result = await addToCartMutation.mutateAsync({
+    // Sync with backend silently in background (no loading state)
+    addToCartMutation.mutate(
+      {
         productId: product.id,
         quantity: 1,
-      });
-      
-      // Update with backend response ID
-      if (result?.id) {
-        useCartStore.getState().syncCartItem(product.id, result.id);
+      },
+      {
+        onSuccess: (result) => {
+          // Update with backend response ID
+          if (result?.id) {
+            useCartStore.getState().syncCartItem(product.id, result.id);
+          }
+        },
+        onError: (error: any) => {
+          // Rollback on error
+          useCartStore.getState().removeFromCart(product.id);
+          Toast.show({
+            type: "error",
+            text1: "Failed to add item",
+            text2: error.message || "Please try again",
+            position: "bottom",
+          });
+        },
       }
-      
-      Toast.show({
-        type: "success",
-        text1: "Added to cart!",
-        text2: `${product.name} added successfully`,
-        position: "bottom",
-      });
-    } catch (error: any) {
-      // Rollback on error
-      useCartStore.getState().removeFromCart(product.id);
-      
-      Toast.show({
-        type: "error",
-        text1: "Failed to add item",
-        text2: error.message || "Please try again",
-        position: "bottom",
-      });
-    }
+    );
   };
 
-  const handleQuantityAdjust = async (newQuantity: number) => {
-    if (isLoading) return;
-
+  const handleQuantityAdjust = (newQuantity: number) => {
     if (newQuantity < 1) {
-      await handleRemove();
+      handleRemove();
       return;
     }
 
     if (inCart) {
-      // Optimistically update local state first
+      // Optimistically update local state first (instant UI update)
       const previousQuantity = currentQuantity;
       useCartStore.getState().updateQuantity(product.id, newQuantity);
 
-      try {
-        if (cartItemId) {
-          await updateCartMutation.mutateAsync({
+      // Sync with backend silently in background
+      if (cartItemId) {
+        updateCartMutation.mutate(
+          {
             itemId: cartItemId,
             quantity: newQuantity,
-          });
-        }
-        
-        Toast.show({
-          type: "success",
-          text1: "Quantity updated",
-          text2: `Updated to ${newQuantity} item${newQuantity > 1 ? "s" : ""}`,
-          position: "bottom",
-          visibilityTime: 2000,
-        });
-      } catch (error: any) {
-        // Rollback on error
-        useCartStore.getState().updateQuantity(product.id, previousQuantity);
-        
-        Toast.show({
-          type: "error",
-          text1: "Update failed",
-          text2: error.message || "Please try again",
-          position: "bottom",
-        });
+          },
+          {
+            onError: (error: any) => {
+              // Rollback on error
+              useCartStore.getState().updateQuantity(product.id, previousQuantity);
+              Toast.show({
+                type: "error",
+                text1: "Update failed",
+                text2: error.message || "Please try again",
+                position: "bottom",
+              });
+            },
+          }
+        );
       }
     } else if (product.inStock) {
-      await handleAddToCart();
+      handleAddToCart();
     }
   };
 
-  const handleRemove = async () => {
-    if (isLoading) return;
-
-    // Optimistically remove from local state first
+  const handleRemove = () => {
+    // Optimistically remove from local state first (instant UI update)
     const previousItem = cartItem;
     useCartStore.getState().removeFromCart(product.id);
 
-    try {
-      if (cartItemId) {
-        await removeCartMutation.mutateAsync(cartItemId);
-      }
-      
-      Toast.show({
-        type: "success",
-        text1: "Removed from cart",
-        text2: `${product.name} removed`,
-        position: "bottom",
-        visibilityTime: 2000,
-      });
-    } catch (error: any) {
-      // Rollback on error
-      if (previousItem) {
-        useCartStore.getState().addToCart(previousItem.product, previousItem.quantity, previousItem.id);
-      }
-      
-      Toast.show({
-        type: "error",
-        text1: "Failed to remove",
-        text2: error.message || "Please try again",
-        position: "bottom",
+    // Sync with backend silently in background
+    if (cartItemId) {
+      removeCartMutation.mutate(cartItemId, {
+        onError: (error: any) => {
+          // Rollback on error
+          if (previousItem) {
+            useCartStore.getState().addToCart(
+              previousItem.product,
+              previousItem.quantity,
+              previousItem.id
+            );
+          }
+          Toast.show({
+            type: "error",
+            text1: "Failed to remove",
+            text2: error.message || "Please try again",
+            position: "bottom",
+          });
+        },
       });
     }
   };
@@ -274,60 +253,39 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
         {inCart ? (
           <View style={styles.quantityControls}>
             <TouchableOpacity
-              style={[styles.qtyButton, isLoading && styles.qtyButtonDisabled]}
+              style={styles.qtyButton}
               onPress={() => handleQuantityAdjust(currentQuantity - 1)}
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#111827" />
-              ) : (
-                <IconFeather name="minus" size={14} color="#111827" />
-              )}
+              <IconFeather name="minus" size={14} color="#111827" />
             </TouchableOpacity>
             <Text style={styles.qtyText}>{currentQuantity}</Text>
             <TouchableOpacity
-              style={[styles.qtyButton, isLoading && styles.qtyButtonDisabled]}
+              style={styles.qtyButton}
               onPress={() => handleQuantityAdjust(currentQuantity + 1)}
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#111827" />
-              ) : (
-                <IconFeather name="plus" size={14} color="#111827" />
-              )}
+              <IconFeather name="plus" size={14} color="#111827" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.removeButton, isLoading && styles.qtyButtonDisabled]}
+              style={styles.removeButton}
               onPress={handleRemove}
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#EF4444" />
-              ) : (
-                <IconFeather name="trash-2" size={14} color="#EF4444" />
-              )}
+              <IconFeather name="trash-2" size={14} color="#EF4444" />
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity
             style={[
               styles.addToCartButton,
-              (!product.inStock || isLoading) && styles.addToCartButtonDisabled,
+              !product.inStock && styles.addToCartButtonDisabled,
             ]}
             onPress={handleAddToCart}
-            disabled={!product.inStock || isLoading}
+            disabled={!product.inStock}
             activeOpacity={0.7}
           >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <IconFeather name="shopping-cart" size={16} color="#FFFFFF" />
-                <Text style={styles.addToCartText}>
-                  {product.inStock ? "Add to Cart" : "Out of Stock"}
-                </Text>
-              </>
-            )}
+            <IconFeather name="shopping-cart" size={16} color="#FFFFFF" />
+            <Text style={styles.addToCartText}>
+              {product.inStock ? "Add to Cart" : "Out of Stock"}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
