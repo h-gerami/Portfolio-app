@@ -218,7 +218,10 @@ export default function TestScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.winButtonSecondary}
-              onPress={() => setShowWinModal(false)}
+              onPress={() => {
+                setShowWinModal(false);
+              }}
+              activeOpacity={0.7}
             >
               <Text style={styles.winButtonTextSecondary}>Close</Text>
             </TouchableOpacity>
