@@ -1,6 +1,6 @@
 import React from "react";
-import { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from "react-native";
 
 type Difficulty = "easy" | "medium" | "hard" | "expert";
 
@@ -128,13 +128,16 @@ export default function TestScreen() {
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [history, setHistory] = useState<MoveHistory[]>([]);
   const [isPencilMode, setIsPencilMode] = useState(false);
+  const [showWinModal, setShowWinModal] = useState(false);
+  const [solution, setSolution] = useState<number[][]>([]);
 
   const generateNewPuzzle = React.useCallback((newDifficulty: Difficulty) => {
     // Generate puzzle synchronously to avoid delay
-    const solution = generateSudokuSolution();
-    const { grid, readOnly: readonly } = removeNumbers(solution, newDifficulty);
+    const generatedSolution = generateSudokuSolution();
+    const { grid, readOnly: readonly } = removeNumbers(generatedSolution, newDifficulty);
     setSudoku(grid);
     setReadOnly(readonly);
+    setSolution(generatedSolution); // Store the solution for win checking
     setNotes(Array.from({ length: GRID_SIZE }, () => 
       Array.from({ length: GRID_SIZE }, () => [])
     ));
@@ -142,6 +145,7 @@ export default function TestScreen() {
     setHistory([]);
     setDifficulty(newDifficulty);
     setIsPencilMode(false);
+    setShowWinModal(false);
   }, []);
 
   const resetCurrentGame = React.useCallback(() => {
@@ -243,6 +247,38 @@ export default function TestScreen() {
       return copy;
     });
   };
+
+  // Check for win condition
+  const checkWin = React.useCallback(() => {
+    // Check if all cells are filled
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (sudoku[r][c] === 0) {
+          return false;
+        }
+      }
+    }
+
+    // Check if the solution matches the stored solution
+    if (solution.length === 0) return false;
+
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (sudoku[r][c] !== solution[r][c]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }, [sudoku, solution]);
+
+  // Check for win after each move
+  useEffect(() => {
+    if (checkWin() && !showWinModal) {
+      setShowWinModal(true);
+    }
+  }, [sudoku, checkWin, showWinModal]);
 
   // Initialize on mount
   React.useEffect(() => {
@@ -397,6 +433,37 @@ export default function TestScreen() {
           </View>
         )}
       </View>
+
+      {/* Win Celebration Modal */}
+      <Modal
+        visible={showWinModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowWinModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.winEmoji}>🎉</Text>
+            <Text style={styles.winTitle}>Congratulations!</Text>
+            <Text style={styles.winMessage}>You've completed the Sudoku puzzle!</Text>
+            <TouchableOpacity
+              style={styles.winButton}
+              onPress={() => {
+                setShowWinModal(false);
+                generateNewPuzzle(difficulty);
+              }}
+            >
+              <Text style={styles.winButtonText}>New Game</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.winButtonSecondary}
+              onPress={() => setShowWinModal(false)}
+            >
+              <Text style={styles.winButtonTextSecondary}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -612,35 +679,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
   },
   scrollContent: {
-    padding: 8,
-    paddingTop: 8,
+    padding: 12,
+    paddingTop: 12,
     alignItems: "center",
     justifyContent: "flex-start",
     flex: 1,
   },
   header: {
     width: "100%",
-    marginBottom: 8,
+    marginBottom: 12,
     alignItems: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "800",
     color: "#111827",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   difficultyContainer: {
     flexDirection: "row",
-    gap: 4,
+    gap: 6,
     flexWrap: "wrap",
     justifyContent: "center",
   },
   difficultyButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: "#F3F4F6",
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: "transparent",
   },
   difficultyButtonActive: {
@@ -648,7 +715,7 @@ const styles = StyleSheet.create({
     borderColor: "#2563EB",
   },
   difficultyButtonText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: "#6B7280",
   },
@@ -657,21 +724,21 @@ const styles = StyleSheet.create({
   },
   sudokuContainer: {
     backgroundColor: "#FFFFFF",
-    padding: 4,
-    borderRadius: 8,
+    padding: 6,
+    borderRadius: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 4,
-    marginBottom: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    marginBottom: 10,
   },
   sudokuRow: {
     flexDirection: "row",
   },
   sudokuCell: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderWidth: 0.5,
     borderColor: "#D1D5DB",
     backgroundColor: "#FFFFFF",
@@ -695,7 +762,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
   },
   sudokuCellText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: "#111827",
   },
@@ -705,28 +772,28 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     width: "100%",
-    marginTop: 6,
-    padding: 8,
+    marginTop: 8,
+    padding: 10,
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
+    borderRadius: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   keyboard: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 4,
+    gap: 6,
     flexWrap: "wrap",
   },
   keyboardButton: {
     backgroundColor: "#F3F4F6",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    minWidth: 36,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    minWidth: 40,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -737,29 +804,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1D5DB",
   },
   keyboardButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
     color: "#111827",
   },
   actionButtonsContainer: {
     flexDirection: "row",
-    gap: 6,
+    gap: 8,
     width: "100%",
-    marginTop: 6,
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 8,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   undoButton: {
     backgroundColor: "#3B82F6",
@@ -773,7 +840,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
   },
   actionButtonTextDisabled: {
@@ -781,15 +848,15 @@ const styles = StyleSheet.create({
   },
   pencilModeContainer: {
     width: "100%",
-    marginBottom: 6,
+    marginBottom: 8,
     alignItems: "center",
   },
   pencilModeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 14,
     backgroundColor: "#F3F4F6",
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: "#E5E7EB",
   },
   pencilModeButtonActive: {
@@ -797,7 +864,7 @@ const styles = StyleSheet.create({
     borderColor: "#F59E0B",
   },
   pencilModeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: "#6B7280",
   },
@@ -809,22 +876,91 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     width: "100%",
     height: "100%",
-    padding: 1,
+    padding: 2,
     justifyContent: "flex-start",
     alignItems: "flex-start",
   },
   noteText: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: "500",
     color: "#6B7280",
     width: "30%",
     textAlign: "left",
-    lineHeight: 8,
+    lineHeight: 9,
   },
   keyboardButtonHighlighted: {
     backgroundColor: "#FEF3C7",
     borderWidth: 2,
     borderColor: "#F59E0B",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    width: "85%",
+    maxWidth: 350,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  winEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  winTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  winMessage: {
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  winButton: {
+    backgroundColor: "#10B981",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 12,
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  winButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  winButtonSecondary: {
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center",
+  },
+  winButtonTextSecondary: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
 
