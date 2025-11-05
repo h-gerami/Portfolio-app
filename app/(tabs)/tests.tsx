@@ -26,6 +26,7 @@ export default function TestScreen() {
     undoLastMove,
     handleNumberInput,
     handleClear,
+    closeWinModal,
     // Constants
     GRID_SIZE,
     NUMBERS,
@@ -343,15 +344,7 @@ export default function TestScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.winButtonSecondary}
-              onPress={async () => {
-                // Force close modal and prevent reopening
-                setShowWinModal(false);
-                // Use setTimeout to ensure state update happens after modal closes
-                setTimeout(() => {
-                  // Reset win state to prevent auto-reopening
-                  generateNewPuzzle(difficulty);
-                }, 100);
-              }}
+              onPress={closeWinModal}
               activeOpacity={0.7}
             >
               <Text style={styles.winButtonTextSecondary}>Close</Text>

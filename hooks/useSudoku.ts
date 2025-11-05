@@ -292,6 +292,12 @@ export function useSudoku() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Function to manually close modal and prevent reopening
+  const closeWinModal = useCallback(() => {
+    setShowWinModal(false);
+    setHasWon(false); // Reset win state to prevent reopening
+  }, []);
+
   return {
     // State
     difficulty,
@@ -312,6 +318,7 @@ export function useSudoku() {
     undoLastMove,
     handleNumberInput,
     handleClear,
+    closeWinModal,
     // Constants
     GRID_SIZE,
     NUMBERS,
