@@ -202,8 +202,16 @@ export default function TestScreen() {
         animationType="fade"
         onRequestClose={() => setShowWinModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowWinModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={styles.winEmoji}>🎉</Text>
             <Text style={styles.winTitle}>Congratulations!</Text>
             <Text style={styles.winMessage}>You've completed the Sudoku puzzle!</Text>
@@ -225,8 +233,8 @@ export default function TestScreen() {
             >
               <Text style={styles.winButtonTextSecondary}>Close</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
