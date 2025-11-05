@@ -27,6 +27,7 @@ const MAPPING = {
   "building.2.fill": "apartment", // 🏢 SF Symbol → MaterialIcon
   "building.2": "business",
   "person.3.fill": "group", // 👥 SF Symbol -> MaterialIcon
+  "square.grid.3x3.fill": "grid-on", // 🔲 Sudoku grid SF Symbol -> MaterialIcon
 } as IconMapping;
 
 /**
