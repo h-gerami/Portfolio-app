@@ -130,6 +130,7 @@ export function useSudoku() {
   const [isPencilMode, setIsPencilMode] = useState(false);
   const [showWinModal, setShowWinModal] = useState(false);
   const [solution, setSolution] = useState<number[][]>([]);
+  const [hasWon, setHasWon] = useState(false); // Track if user has won to prevent auto-reopening
 
   const generateNewPuzzle = useCallback((newDifficulty: Difficulty) => {
     // Generate puzzle synchronously to avoid delay
@@ -146,6 +147,7 @@ export function useSudoku() {
     setDifficulty(newDifficulty);
     setIsPencilMode(false);
     setShowWinModal(false);
+    setHasWon(false);
   }, []);
 
   const resetCurrentGame = useCallback(() => {
@@ -275,10 +277,14 @@ export function useSudoku() {
 
   // Check for win after each move
   useEffect(() => {
-    if (checkWin() && !showWinModal) {
+    if (checkWin() && !showWinModal && !hasWon) {
       setShowWinModal(true);
+      setHasWon(true);
+    } else if (!checkWin() && hasWon) {
+      // If puzzle is no longer complete (e.g., user cleared a cell), reset win state
+      setHasWon(false);
     }
-  }, [sudoku, checkWin, showWinModal]);
+  }, [sudoku, checkWin, showWinModal, hasWon]);
 
   // Initialize on mount
   useEffect(() => {

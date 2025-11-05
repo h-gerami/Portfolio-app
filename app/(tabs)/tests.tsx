@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 import { useSudoku, Difficulty } from "@/hooks/useSudoku";
+import Icon from "react-native-vector-icons/Feather";
 
 export default function TestScreen() {
   const {
@@ -28,6 +30,103 @@ export default function TestScreen() {
     GRID_SIZE,
     NUMBERS,
   } = useSudoku();
+
+  // Music player state
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  // Sample music tracks (you can replace with actual URLs)
+  const musicTracks = [
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+  ];
+
+  // Initialize audio
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+    });
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Load and play music
+  const loadAndPlayMusic = async (index: number) => {
+    try {
+      // Stop current sound if playing
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+      }
+
+      // Load new sound
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: musicTracks[index] },
+        { shouldPlay: true, isLooping: false }
+      );
+
+      soundRef.current = newSound;
+      setSound(newSound);
+      setIsPlaying(true);
+      setCurrentTrackIndex(index);
+
+      // Handle playback finish
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPlaying(false);
+          // Auto-play next track
+          const nextIndex = (index + 1) % musicTracks.length;
+          loadAndPlayMusic(nextIndex);
+        }
+      });
+    } catch (error) {
+      console.error("Error loading music:", error);
+    }
+  };
+
+  // Play/pause toggle
+  const togglePlayPause = async () => {
+    if (!soundRef.current) {
+      // Start playing if no sound loaded
+      await loadAndPlayMusic(currentTrackIndex);
+      return;
+    }
+
+    try {
+      if (isPlaying) {
+        await soundRef.current.pauseAsync();
+      } else {
+        await soundRef.current.playAsync();
+      }
+      setIsPlaying(!isPlaying);
+    } catch (error) {
+      console.error("Error toggling playback:", error);
+    }
+  };
+
+  // Next track
+  const playNext = async () => {
+    const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
+    await loadAndPlayMusic(nextIndex);
+  };
+
+  // Initialize with first track (but don't auto-play)
+  useEffect(() => {
+    loadAndPlayMusic(0).then(() => {
+      if (soundRef.current) {
+        soundRef.current.pauseAsync();
+        setIsPlaying(false);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -222,8 +321,14 @@ export default function TestScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.winButtonSecondary}
-              onPress={() => {
+              onPress={async () => {
+                // Force close modal and prevent reopening
                 setShowWinModal(false);
+                // Use setTimeout to ensure state update happens after modal closes
+                setTimeout(() => {
+                  // Reset win state to prevent auto-reopening
+                  generateNewPuzzle(difficulty);
+                }, 100);
               }}
               activeOpacity={0.7}
             >
@@ -759,6 +864,29 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 14,
     fontWeight: "600",
+  },
+  musicPlayer: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    borderRadius: 24,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  musicButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
