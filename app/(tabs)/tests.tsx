@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useSudoku, Difficulty } from "@/hooks/useSudoku";
 
 export default function TestScreen() {
