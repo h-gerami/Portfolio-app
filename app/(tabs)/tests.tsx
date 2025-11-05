@@ -440,15 +440,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
   },
   scrollContent: {
-    padding: 12,
-    paddingTop: 12,
+    padding: 16,
+    paddingTop: 16,
     alignItems: "center",
     justifyContent: "flex-start",
     flex: 1,
   },
   header: {
     width: "100%",
-    marginBottom: 12,
+    marginBottom: 16,
     alignItems: "center",
   },
   title: {
@@ -485,21 +485,21 @@ const styles = StyleSheet.create({
   },
   sudokuContainer: {
     backgroundColor: "#FFFFFF",
-    padding: 6,
-    borderRadius: 10,
+    padding: 8,
+    borderRadius: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-    marginBottom: 10,
+    shadowRadius: 8,
+    elevation: 6,
+    marginBottom: 16,
   },
   sudokuRow: {
     flexDirection: "row",
   },
   sudokuCell: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderWidth: 0.5,
     borderColor: "#D1D5DB",
     backgroundColor: "#FFFFFF",
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
   },
   sudokuCellText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#111827",
   },
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   numberModalContent: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderRadius: 20,
     padding: 20,
     alignItems: "center",
@@ -547,6 +547,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+    backdropFilter: "blur(10px)",
   },
   numberGrid: {
     flexDirection: "row",
@@ -592,8 +593,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     width: "100%",
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 12,
   },
   actionButton: {
     flex: 1,
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
   },
   pencilModeContainer: {
     width: "100%",
-    marginBottom: 8,
+    marginBottom: 12,
     alignItems: "center",
   },
   pencilModeButton: {
