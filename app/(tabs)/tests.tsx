@@ -149,33 +149,51 @@ export default function TestScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Number Keyboard */}
-        {selectedCell !== null && !readOnly[selectedCell.row][selectedCell.col] && (
-          <View style={styles.keyboardContainer}>
-            <View style={styles.keyboard}>
-              {NUMBERS.map((num) => (
-                <TouchableOpacity
-                  key={num}
-                  onPress={() => handleNumberInput(num)}
-                  style={[
-                    styles.keyboardButton,
-                    notes[selectedCell.row][selectedCell.col].includes(num) && styles.keyboardButtonHighlighted,
-                  ]}
-                >
-                  <Text style={styles.keyboardButtonText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
+      {/* Number Selection Modal */}
+      {selectedCell !== null && !readOnly[selectedCell.row][selectedCell.col] && (
+        <Modal
+          visible={selectedCell !== null}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setSelectedCell(null)}
+        >
+          <TouchableOpacity
+            style={styles.numberModalOverlay}
+            activeOpacity={1}
+            onPress={() => setSelectedCell(null)}
+          >
+            <View style={styles.numberModalContent}>
+              <View style={styles.numberGrid}>
+                {NUMBERS.map((num) => (
+                  <TouchableOpacity
+                    key={num}
+                    style={styles.numberGridButton}
+                    onPress={() => {
+                      handleNumberInput(num);
+                      setSelectedCell(null);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.numberGridButtonText}>{num}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <TouchableOpacity
-                onPress={handleClear}
-                style={[styles.keyboardButton, styles.clearButton]}
+                style={styles.clearNumberButton}
+                onPress={() => {
+                  handleClear();
+                  setSelectedCell(null);
+                }}
+                activeOpacity={0.7}
               >
-                <Text style={styles.keyboardButtonText}>C</Text>
+                <Text style={styles.clearNumberButtonText}>Clear</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-      </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
 
       {/* Win Celebration Modal */}
       <Modal
@@ -502,7 +520,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   sudokuCellReadOnly: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#E5E7EB",
   },
   sudokuCellText: {
     fontSize: 16,
@@ -513,43 +531,62 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111827",
   },
-  keyboardContainer: {
-    width: "100%",
-    marginTop: 8,
-    padding: 10,
+  numberModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  numberModalContent: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  numberGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    width: 180,
+    gap: 8,
+    marginBottom: 16,
+  },
+  numberGridButton: {
+    width: 52,
+    height: 52,
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
-  keyboard: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  keyboardButton: {
-    backgroundColor: "#F3F4F6",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    minWidth: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clearButton: {
-    backgroundColor: "#FEE2E2",
-  },
-  doneButton: {
-    backgroundColor: "#D1D5DB",
-  },
-  keyboardButtonText: {
-    fontSize: 16,
+  numberGridButtonText: {
+    fontSize: 24,
     fontWeight: "700",
     color: "#111827",
+  },
+  clearNumberButton: {
+    backgroundColor: "#FEE2E2",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center",
+  },
+  clearNumberButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#DC2626",
   },
   actionButtonsContainer: {
     flexDirection: "row",
