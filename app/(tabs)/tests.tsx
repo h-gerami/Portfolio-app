@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
 
 type Difficulty = "easy" | "medium" | "hard" | "expert";
 
@@ -252,10 +252,7 @@ export default function TestScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.scrollContent}>
         {/* Header with Difficulty Selector */}
         <View style={styles.header}>
           <Text style={styles.title}>Sudoku</Text>
@@ -377,10 +374,6 @@ export default function TestScreen() {
         {/* Number Keyboard */}
         {selectedCell !== null && !readOnly[selectedCell.row][selectedCell.col] && (
           <View style={styles.keyboardContainer}>
-            <Text style={styles.keyboardTitle}>
-              Selected: Row {selectedCell.row + 1}, Col {selectedCell.col + 1}
-              {isPencilMode && " (Pencil)"}
-            </Text>
             <View style={styles.keyboard}>
               {NUMBERS.map((num) => (
                 <TouchableOpacity
@@ -398,32 +391,12 @@ export default function TestScreen() {
                 onPress={handleClear}
                 style={[styles.keyboardButton, styles.clearButton]}
               >
-                <Text style={styles.keyboardButtonText}>Clear</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setSelectedCell(null)}
-                style={[styles.keyboardButton, styles.doneButton]}
-              >
-                <Text style={styles.keyboardButtonText}>Done</Text>
+                <Text style={styles.keyboardButtonText}>C</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
-
-          {selectedCell === null && (
-            <Text style={styles.hintText}>
-              Tap an empty cell to select it, then enter a number (1-9)
-            </Text>
-          )}
-
-        {/* New Game Button */}
-        <TouchableOpacity
-          style={styles.newGameButton}
-          onPress={() => generateNewPuzzle(difficulty)}
-        >
-          <Text style={styles.newGameButtonText}>New Game</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -639,34 +612,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
   },
   scrollContent: {
-    padding: 16,
-    paddingTop: 20,
+    padding: 8,
+    paddingTop: 8,
     alignItems: "center",
-    paddingBottom: 40,
+    justifyContent: "flex-start",
+    flex: 1,
   },
   header: {
     width: "100%",
-    marginBottom: 24,
+    marginBottom: 8,
     alignItems: "center",
   },
   title: {
-    fontSize: 32,
+    fontSize: 20,
     fontWeight: "800",
     color: "#111827",
-    marginBottom: 16,
+    marginBottom: 6,
   },
   difficultyContainer: {
     flexDirection: "row",
-    gap: 8,
+    gap: 4,
     flexWrap: "wrap",
     justifyContent: "center",
   },
   difficultyButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     backgroundColor: "#F3F4F6",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "transparent",
   },
   difficultyButtonActive: {
@@ -674,7 +648,7 @@ const styles = StyleSheet.create({
     borderColor: "#2563EB",
   },
   difficultyButtonText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: "600",
     color: "#6B7280",
   },
@@ -683,45 +657,45 @@ const styles = StyleSheet.create({
   },
   sudokuContainer: {
     backgroundColor: "#FFFFFF",
-    padding: 8,
-    borderRadius: 12,
+    padding: 4,
+    borderRadius: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    marginBottom: 24,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 8,
   },
   sudokuRow: {
     flexDirection: "row",
   },
   sudokuCell: {
-    width: 36,
-    height: 36,
-    borderWidth: 1,
+    width: 28,
+    height: 28,
+    borderWidth: 0.5,
     borderColor: "#D1D5DB",
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },
   cellLeftBorder: {
-    borderLeftWidth: 3,
+    borderLeftWidth: 2,
     borderLeftColor: "#111827",
   },
   cellTopBorder: {
-    borderTopWidth: 3,
+    borderTopWidth: 2,
     borderTopColor: "#111827",
   },
   sudokuCellSelected: {
     backgroundColor: "#EFF6FF",
     borderColor: "#3B82F6",
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   sudokuCellReadOnly: {
     backgroundColor: "#F9FAFB",
   },
   sudokuCellText: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "600",
     color: "#111827",
   },
@@ -731,35 +705,28 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     width: "100%",
-    marginTop: 24,
-    padding: 16,
+    marginTop: 6,
+    padding: 8,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 2,
-  },
-  keyboardTitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 16,
-    textAlign: "center",
-    fontWeight: "600",
   },
   keyboard: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 8,
+    gap: 4,
     flexWrap: "wrap",
   },
   keyboardButton: {
     backgroundColor: "#F3F4F6",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minWidth: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    minWidth: 36,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -770,54 +737,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1D5DB",
   },
   keyboardButtonText: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "700",
     color: "#111827",
   },
-  hintText: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    textAlign: "center",
-    fontStyle: "italic",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  newGameButton: {
-    marginTop: 24,
-    backgroundColor: "#10B981",
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  newGameButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
   actionButtonsContainer: {
     flexDirection: "row",
-    gap: 12,
+    gap: 6,
     width: "100%",
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 6,
+    marginBottom: 6,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   undoButton: {
     backgroundColor: "#3B82F6",
@@ -831,7 +773,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
   },
   actionButtonTextDisabled: {
@@ -839,15 +781,15 @@ const styles = StyleSheet.create({
   },
   pencilModeContainer: {
     width: "100%",
-    marginBottom: 16,
+    marginBottom: 6,
     alignItems: "center",
   },
   pencilModeButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
     backgroundColor: "#F3F4F6",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#E5E7EB",
   },
   pencilModeButtonActive: {
@@ -855,7 +797,7 @@ const styles = StyleSheet.create({
     borderColor: "#F59E0B",
   },
   pencilModeText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: "600",
     color: "#6B7280",
   },
@@ -867,17 +809,17 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     width: "100%",
     height: "100%",
-    padding: 2,
+    padding: 1,
     justifyContent: "flex-start",
     alignItems: "flex-start",
   },
   noteText: {
-    fontSize: 9,
+    fontSize: 7,
     fontWeight: "500",
     color: "#6B7280",
     width: "30%",
     textAlign: "left",
-    lineHeight: 10,
+    lineHeight: 8,
   },
   keyboardButtonHighlighted: {
     backgroundColor: "#FEF3C7",
