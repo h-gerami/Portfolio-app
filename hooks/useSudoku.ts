@@ -277,11 +277,13 @@ export function useSudoku() {
 
   // Check for win after each move
   useEffect(() => {
+    // Only check for win if modal is not shown and we haven't already won
     if (checkWin() && !showWinModal && !hasWon) {
       setShowWinModal(true);
       setHasWon(true);
-    } else if (!checkWin() && hasWon) {
-      // If puzzle is no longer complete (e.g., user cleared a cell), reset win state
+    }
+    // Reset win state if puzzle becomes incomplete (user cleared a cell)
+    if (!checkWin() && hasWon && !showWinModal) {
       setHasWon(false);
     }
   }, [sudoku, checkWin, showWinModal, hasWon]);
@@ -294,8 +296,10 @@ export function useSudoku() {
 
   // Function to manually close modal and prevent reopening
   const closeWinModal = useCallback(() => {
+    // Reset win state first to prevent effect from reopening
+    setHasWon(false);
+    // Then close the modal
     setShowWinModal(false);
-    setHasWon(false); // Reset win state to prevent reopening
   }, []);
 
   return {
