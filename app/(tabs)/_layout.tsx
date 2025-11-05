@@ -78,7 +78,7 @@ export default function TabLayout() {
             options={{
               title: "Sudoku",
               tabBarIcon: ({ color }) => (
-                <IconSymbol size={28} name="grid.fill" color={color} />
+                <IconSymbol size={28} name="square.grid.3x3.fill" color={color} />
               ),
             }}
           />
