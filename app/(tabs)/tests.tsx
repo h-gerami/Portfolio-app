@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import { useSudoku, Difficulty } from "@/hooks/useSudoku";
-import Icon from "react-native-vector-icons/Feather";
+import Icon from "@expo/vector-icons/Feather";
 
 export default function TestScreen() {
   const {
@@ -248,6 +248,28 @@ export default function TestScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Music Player Controls */}
+      <View style={styles.musicPlayer}>
+        <TouchableOpacity
+          style={styles.musicButton}
+          onPress={togglePlayPause}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={isPlaying ? "pause" : "play"}
+            size={16}
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.musicButton}
+          onPress={playNext}
+          activeOpacity={0.7}
+        >
+          <Icon name="skip-forward" size={16} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       {/* Number Selection Modal */}
